@@ -1,0 +1,11 @@
+CREATE TABLE devices (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name VARCHAR(150) NOT NULL,
+    type VARCHAR(50) NOT NULL,
+    location VARCHAR(255),
+    active BOOLEAN NOT NULL DEFAULT TRUE,
+    minimum_limit NUMERIC(10, 2),
+    maximum_limit NUMERIC(10, 2),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
