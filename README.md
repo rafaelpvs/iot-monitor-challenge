@@ -35,7 +35,7 @@ flowchart TD
 
 ## 2. Technology stack
 
-- Java 21+
+- Java 25+
 - Spring Boot (a stable version compatible with Java 25)
 - Spring Web, Spring Validation, and Spring Data JPA
 - Spring for Apache Kafka
@@ -55,7 +55,7 @@ Suggested initial configuration for all projects:
 | --- | --- |
 | Project | Maven |
 | Language | Java |
-| Java | 21 |
+| Java | 25 |
 | Packaging | Jar |
 | Group | `br.com.iotmonitor` |
 | Artifact | Service name (`device-service`, etc.) |
