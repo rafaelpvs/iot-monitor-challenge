@@ -78,3 +78,26 @@ curl --fail-with-body \
     "maximumLimit": 20.00
   }'
 ```
+
+## Resposta de erro de validação
+
+Requisições que não atendem às validações retornam HTTP `400 Bad Request`:
+
+```json
+{
+  "timestamp": "2026-10-18T18:00:00Z",
+  "status": 400,
+  "error": "Bad Request",
+  "message": "Request validation failed",
+  "path": "/devices",
+  "violations": [
+    {
+      "field": "name",
+      "message": "must not be blank"
+    }
+  ]
+}
+```
+
+Quando o corpo estiver ausente ou contiver JSON malformado, a resposta terá a
+mensagem `Request body is missing or malformed` e a lista `violations` vazia.
