@@ -1,14 +1,12 @@
-# Device Service — requisições cURL
+# Cadastrar dispositivo
 
 Por padrão, o serviço responde em `http://localhost:8080`.
-
-Defina a URL-base para reutilizá-la nos exemplos:
 
 ```bash
 DEVICE_SERVICE_URL=http://localhost:8080
 ```
 
-## Cadastrar dispositivo
+## Requisição
 
 `POST /devices`
 
@@ -27,7 +25,7 @@ curl --fail-with-body \
   }'
 ```
 
-### Campos
+## Campos
 
 | Campo | Tipo | Obrigatório | Restrições |
 | --- | --- | --- | --- |
@@ -38,7 +36,7 @@ curl --fail-with-body \
 | `minimumLimit` | decimal | Não | Até 8 dígitos inteiros e 2 casas decimais |
 | `maximumLimit` | decimal | Não | Até 8 dígitos inteiros e 2 casas decimais; não pode ser menor que `minimumLimit` |
 
-Formato de resposta esperado após a persistência do dispositivo:
+## Resposta
 
 ```json
 {

@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import jakarta.servlet.http.HttpServletRequest;
+import br.com.rafaelpvs.device_service.services.DeviceNotFoundException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -35,6 +36,22 @@ public class GlobalExceptionHandler {
       HttpServletRequest request) {
 
     return badRequest("Request body is missing or malformed", request, List.of());
+  }
+
+  @ExceptionHandler(DeviceNotFoundException.class)
+  public ResponseEntity<ApiErrorResponse> handleDeviceNotFound(
+      DeviceNotFoundException exception,
+      HttpServletRequest request) {
+    HttpStatus status = HttpStatus.NOT_FOUND;
+    ApiErrorResponse response = new ApiErrorResponse(
+        Instant.now(),
+        status.value(),
+        status.getReasonPhrase(),
+        exception.getMessage(),
+        request.getRequestURI(),
+        List.of());
+
+    return ResponseEntity.status(status).body(response);
   }
 
   private ResponseEntity<ApiErrorResponse> badRequest(
