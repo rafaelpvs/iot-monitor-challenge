@@ -1,5 +1,7 @@
 package br.com.rafaelpvs.ingestion_service.controllers.telemetry;
 
+import java.util.concurrent.CompletableFuture;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -21,11 +23,10 @@ public class TelemetryController {
   private final TelemetryService telemetryService;
 
   @PostMapping
-  public ResponseEntity<Void> create(@RequestBody CreateTelemetryRequest request) {
+  public CompletableFuture<ResponseEntity<Void>> create(@RequestBody CreateTelemetryRequest request) {
     var command = telemetryMapper.toCommand(request);
-    telemetryService.create(command);
-
-    return ResponseEntity.accepted().build();
+    return telemetryService.create(command)
+        .thenApply(ignored -> ResponseEntity.accepted().build());
   }
 
 }
