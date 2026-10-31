@@ -20,7 +20,7 @@ public class TelemetryProducer {
   public CompletableFuture<SendResult<String, Object>> send(CreateTelemetryCommand command) {
     return kafkaTemplate.send(
         topicProperties.name(),
-        command.deviceId(),
+        command.deviceId().toString(),
         command);
   }
 }

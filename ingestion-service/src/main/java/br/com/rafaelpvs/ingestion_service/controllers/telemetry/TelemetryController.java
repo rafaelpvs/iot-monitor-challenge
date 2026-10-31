@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.RestController;
 import br.com.rafaelpvs.ingestion_service.controllers.telemetry.dtos.CreateTelemetryRequest;
 import br.com.rafaelpvs.ingestion_service.controllers.telemetry.mappers.TelemetryMapper;
 import br.com.rafaelpvs.ingestion_service.services.telemetry.TelemetryService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.web.bind.annotation.PostMapping;
@@ -23,7 +24,8 @@ public class TelemetryController {
   private final TelemetryService telemetryService;
 
   @PostMapping
-  public CompletableFuture<ResponseEntity<Void>> create(@RequestBody CreateTelemetryRequest request) {
+  public CompletableFuture<ResponseEntity<Void>> create(
+      @Valid @RequestBody CreateTelemetryRequest request) {
     var command = telemetryMapper.toCommand(request);
     return telemetryService.create(command)
         .thenApply(ignored -> ResponseEntity.accepted().build());
