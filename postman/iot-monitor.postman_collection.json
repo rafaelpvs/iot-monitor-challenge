@@ -53,8 +53,12 @@
         "exec": [
           "const end = new Date();",
           "const start = new Date(end.getTime() - 24 * 60 * 60 * 1000);",
-          "pm.collectionVariables.set('startTimestamp', start.toISOString());",
-          "pm.collectionVariables.set('endTimestamp', end.toISOString());"
+          "if (!pm.collectionVariables.get('startTimestamp')) {",
+          "  pm.collectionVariables.set('startTimestamp', start.toISOString());",
+          "}",
+          "if (!pm.collectionVariables.get('endTimestamp')) {",
+          "  pm.collectionVariables.set('endTimestamp', end.toISOString());",
+          "}"
         ],
         "type": "text/javascript"
       }
@@ -343,11 +347,28 @@
       ]
     },
     {
-      "name": "Telemetry Service [Pending]",
-      "description": "API contracts defined in the README. These endpoints are not implemented yet.",
+      "name": "Telemetry Service",
+      "description": "Telemetry query APIs. Requests prefixed with [Pending] are not implemented yet.",
       "item": [
         {
-          "name": "[Pending] Get telemetry history",
+          "name": "Get telemetry history",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Response is paginated', () => {",
+                  "  const response = pm.response.json();",
+                  "  pm.expect(response.content).to.be.an('array');",
+                  "  pm.expect(response.page).to.be.a('number');",
+                  "  pm.expect(response.totalElements).to.be.a('number');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
           "request": {
             "method": "GET",
             "header": [],
