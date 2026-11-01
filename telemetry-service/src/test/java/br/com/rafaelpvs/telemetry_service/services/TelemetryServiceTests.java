@@ -22,9 +22,11 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import br.com.rafaelpvs.telemetry_service.consumers.telemetry.events.TelemetryReceivedEvent;
 import br.com.rafaelpvs.telemetry_service.entities.TelemetryEntity;
 import br.com.rafaelpvs.telemetry_service.repositories.TelemetryRepository;
+import br.com.rafaelpvs.telemetry_service.repositories.TelemetryRepository.StatisticsProjection;
 import br.com.rafaelpvs.telemetry_service.services.exceptions.InvalidTelemetryPeriodException;
 import br.com.rafaelpvs.telemetry_service.services.mappers.TelemetryMapper;
 import br.com.rafaelpvs.telemetry_service.services.queries.FindTelemetryHistoryQuery;
+import br.com.rafaelpvs.telemetry_service.services.queries.FindTelemetryStatisticsQuery;
 
 @ExtendWith(MockitoExtension.class)
 class TelemetryServiceTests {
@@ -123,6 +125,47 @@ class TelemetryServiceTests {
     verify(telemetryRepository, never())
         .findByDeviceIdAndEventTimestampBetweenOrderByEventTimestampDescEventIdDesc(
         org.mockito.ArgumentMatchers.any(),
+        org.mockito.ArgumentMatchers.any(),
+        org.mockito.ArgumentMatchers.any(),
+        org.mockito.ArgumentMatchers.any());
+  }
+
+  @Test
+  void shouldFindStatisticsForPeriod() {
+    var deviceId = UUID.randomUUID();
+    var start = Instant.parse("2026-10-31T00:00:00Z");
+    var end = Instant.parse("2026-11-01T00:00:00Z");
+    var projection = org.mockito.Mockito.mock(StatisticsProjection.class);
+    when(projection.getAverageTemperature()).thenReturn(new BigDecimal("30.5000"));
+    when(projection.getMinimumTemperature()).thenReturn(new BigDecimal("20.0000"));
+    when(projection.getMaximumTemperature()).thenReturn(new BigDecimal("41.0000"));
+    when(projection.getAverageEnergyConsumption()).thenReturn(new BigDecimal("110.0000"));
+    when(projection.getMinimumEnergyConsumption()).thenReturn(new BigDecimal("100.0000"));
+    when(projection.getMaximumEnergyConsumption()).thenReturn(new BigDecimal("120.0000"));
+    when(telemetryRepository.findStatistics(deviceId, start, end)).thenReturn(projection);
+
+    var result = telemetryService.findStatistics(
+        new FindTelemetryStatisticsQuery(deviceId, start, end));
+
+    assertThat(result.temperature().average()).isEqualByComparingTo("30.5000");
+    assertThat(result.temperature().minimum()).isEqualByComparingTo("20.0000");
+    assertThat(result.temperature().maximum()).isEqualByComparingTo("41.0000");
+    assertThat(result.energyConsumption().average()).isEqualByComparingTo("110.0000");
+    assertThat(result.energyConsumption().minimum()).isEqualByComparingTo("100.0000");
+    assertThat(result.energyConsumption().maximum()).isEqualByComparingTo("120.0000");
+  }
+
+  @Test
+  void shouldRejectInvertedStatisticsPeriod() {
+    var start = Instant.parse("2026-11-01T00:00:00Z");
+    var end = Instant.parse("2026-10-31T00:00:00Z");
+    var query = new FindTelemetryStatisticsQuery(UUID.randomUUID(), start, end);
+
+    assertThatThrownBy(() -> telemetryService.findStatistics(query))
+        .isInstanceOf(InvalidTelemetryPeriodException.class)
+        .hasMessage("start must be before or equal to end");
+
+    verify(telemetryRepository, never()).findStatistics(
         org.mockito.ArgumentMatchers.any(),
         org.mockito.ArgumentMatchers.any(),
         org.mockito.ArgumentMatchers.any());

@@ -12,7 +12,10 @@ import br.com.rafaelpvs.telemetry_service.entities.TelemetryEntity;
 import br.com.rafaelpvs.telemetry_service.repositories.TelemetryRepository;
 import br.com.rafaelpvs.telemetry_service.services.exceptions.InvalidTelemetryPeriodException;
 import br.com.rafaelpvs.telemetry_service.services.mappers.TelemetryMapper;
+import br.com.rafaelpvs.telemetry_service.services.models.MetricStatistics;
+import br.com.rafaelpvs.telemetry_service.services.models.TelemetryStatistics;
 import br.com.rafaelpvs.telemetry_service.services.queries.FindTelemetryHistoryQuery;
+import br.com.rafaelpvs.telemetry_service.services.queries.FindTelemetryStatisticsQuery;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -47,8 +50,29 @@ public class TelemetryService {
         createPageable(query));
   }
 
+  @Transactional(readOnly = true)
+  public TelemetryStatistics findStatistics(FindTelemetryStatisticsQuery query) {
+    validatePeriod(query.start(), query.end());
+    var statistics = telemetryRepository.findStatistics(
+        query.deviceId(), query.start(), query.end());
+
+    return new TelemetryStatistics(
+        new MetricStatistics(
+            statistics.getAverageTemperature(),
+            statistics.getMinimumTemperature(),
+            statistics.getMaximumTemperature()),
+        new MetricStatistics(
+            statistics.getAverageEnergyConsumption(),
+            statistics.getMinimumEnergyConsumption(),
+            statistics.getMaximumEnergyConsumption()));
+  }
+
   private void validatePeriod(FindTelemetryHistoryQuery query) {
-    if (query.start().isAfter(query.end())) {
+    validatePeriod(query.start(), query.end());
+  }
+
+  private void validatePeriod(Instant start, Instant end) {
+    if (start.isAfter(end)) {
       throw new InvalidTelemetryPeriodException();
     }
   }
