@@ -1,0 +1,428 @@
+{
+  "info": {
+    "name": "IoT Monitor",
+    "description": "Requests for all IoT Monitor API contracts. Requests prefixed with [Pending] are specified in the README but are not implemented yet. Creating a device automatically stores its ID. Dynamic variables generate telemetry UUIDs and timestamps.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "deviceServiceUrl",
+      "value": "http://localhost:8080",
+      "type": "string"
+    },
+    {
+      "key": "ingestionServiceUrl",
+      "value": "http://localhost:8082",
+      "type": "string"
+    },
+    {
+      "key": "telemetryServiceUrl",
+      "value": "http://localhost:8083",
+      "type": "string"
+    },
+    {
+      "key": "alertServiceUrl",
+      "value": "http://localhost:8084",
+      "type": "string"
+    },
+    {
+      "key": "deviceId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "alertId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "startTimestamp",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "endTimestamp",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "exec": [
+          "const end = new Date();",
+          "const start = new Date(end.getTime() - 24 * 60 * 60 * 1000);",
+          "pm.collectionVariables.set('startTimestamp', start.toISOString());",
+          "pm.collectionVariables.set('endTimestamp', end.toISOString());"
+        ],
+        "type": "text/javascript"
+      }
+    }
+  ],
+  "item": [
+    {
+      "name": "Device Service",
+      "item": [
+        {
+          "name": "Create device",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Response contains an ID', () => {",
+                  "  const response = pm.response.json();",
+                  "  pm.expect(response.id).to.be.a('string').and.not.empty;",
+                  "  pm.collectionVariables.set('deviceId', response.id);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Boiler A Sensor\",\n  \"type\": \"TEMPERATURE\",\n  \"location\": \"Factory 01\",\n  \"active\": true,\n  \"minimumLimit\": 20.00,\n  \"maximumLimit\": 80.00\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{deviceServiceUrl}}/devices",
+            "description": "Creates an active device and saves the returned ID in the collection variable `deviceId`."
+          }
+        },
+        {
+          "name": "List devices",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Response is an array', () => pm.expect(pm.response.json()).to.be.an('array'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{deviceServiceUrl}}/devices"
+          }
+        },
+        {
+          "name": "Get device",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "if (!pm.collectionVariables.get('deviceId')) {",
+                  "  throw new Error('Run Create device first');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Returns the selected device', () => {",
+                  "  pm.expect(pm.response.json().id).to.eql(pm.collectionVariables.get('deviceId'));",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{deviceServiceUrl}}/devices/{{deviceId}}"
+          }
+        },
+        {
+          "name": "Update device",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "if (!pm.collectionVariables.get('deviceId')) {",
+                  "  throw new Error('Run Create device first');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', () => pm.response.to.have.status(200));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Boiler A Sensor\",\n  \"type\": \"TEMPERATURE\",\n  \"location\": \"Factory 02\",\n  \"minimumLimit\": 15.00,\n  \"maximumLimit\": 85.00\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{deviceServiceUrl}}/devices/{{deviceId}}"
+          }
+        },
+        {
+          "name": "Deactivate device",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "if (!pm.collectionVariables.get('deviceId')) {",
+                  "  throw new Error('Run Create device first');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Device is inactive', () => pm.expect(pm.response.json().active).to.be.false);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"active\": false\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{deviceServiceUrl}}/devices/{{deviceId}}/status"
+          }
+        },
+        {
+          "name": "Activate device",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "if (!pm.collectionVariables.get('deviceId')) {",
+                  "  throw new Error('Run Create device first');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Device is active', () => pm.expect(pm.response.json().active).to.be.true);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"active\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{deviceServiceUrl}}/devices/{{deviceId}}/status"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Ingestion Service",
+      "item": [
+        {
+          "name": "Create telemetry",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "if (!pm.collectionVariables.get('deviceId')) {",
+                  "  throw new Error('Run Create device first');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 202', () => pm.response.to.have.status(202));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"eventId\": \"{{$guid}}\",\n  \"deviceId\": \"{{deviceId}}\",\n  \"temperature\": 95.5,\n  \"energyConsumption\": 120.8,\n  \"timestamp\": \"{{$isoTimestamp}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{ingestionServiceUrl}}/telemetry",
+            "description": "Uses `{{$guid}}` for a new event ID and `{{$isoTimestamp}}` for the current UTC timestamp."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Telemetry Service [Pending]",
+      "description": "API contracts defined in the README. These endpoints are not implemented yet.",
+      "item": [
+        {
+          "name": "[Pending] Get telemetry history",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{telemetryServiceUrl}}/telemetry/{{deviceId}}?start={{startTimestamp}}&end={{endTimestamp}}&page=0&size=20",
+            "description": "Returns the paginated telemetry history for the last 24 hours. The collection pre-request script generates the date range automatically."
+          }
+        },
+        {
+          "name": "[Pending] Get telemetry statistics",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{telemetryServiceUrl}}/telemetry/{{deviceId}}/statistics?start={{startTimestamp}}&end={{endTimestamp}}",
+            "description": "Returns average, minimum and maximum values for the last 24 hours."
+          }
+        },
+        {
+          "name": "[Pending] Get latest telemetry",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{telemetryServiceUrl}}/telemetry/{{deviceId}}/latest",
+            "description": "Returns the chronologically latest reading for the selected device."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Alert Service [Pending]",
+      "description": "API contracts defined in the README. These endpoints are not implemented yet.",
+      "item": [
+        {
+          "name": "[Pending] Search alerts",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "  const alerts = pm.response.json();",
+                  "  if (Array.isArray(alerts) && alerts.length > 0 && alerts[0].id) {",
+                  "    pm.collectionVariables.set('alertId', alerts[0].id);",
+                  "  }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{alertServiceUrl}}/alerts?deviceId={{deviceId}}&status=OPEN",
+            "description": "Searches open alerts and stores the first returned ID in `alertId`."
+          }
+        },
+        {
+          "name": "[Pending] Get alert",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{alertServiceUrl}}/alerts/{{alertId}}",
+            "description": "Requires `alertId`, which can be populated by Search alerts."
+          }
+        },
+        {
+          "name": "[Pending] Resolve alert",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": "{{alertServiceUrl}}/alerts/{{alertId}}/resolve",
+            "description": "Resolves the selected alert."
+          }
+        }
+      ]
+    }
+  ]
+}
