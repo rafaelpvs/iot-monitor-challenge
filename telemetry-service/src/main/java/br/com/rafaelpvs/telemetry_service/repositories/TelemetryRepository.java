@@ -1,6 +1,7 @@
 package br.com.rafaelpvs.telemetry_service.repositories;
 
 import java.time.Instant;
+import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.data.domain.Page;
@@ -33,6 +34,8 @@ public interface TelemetryRepository extends JpaRepository<TelemetryEntity, UUID
       Instant start,
       Instant end,
       Pageable pageable);
+
+  Optional<TelemetryEntity> findFirstByDeviceIdOrderByEventTimestampDescEventIdDesc(UUID deviceId);
 
   @Query(value = """
       SELECT CAST(AVG(temperature) AS DECIMAL(19, 4)) AS averageTemperature,

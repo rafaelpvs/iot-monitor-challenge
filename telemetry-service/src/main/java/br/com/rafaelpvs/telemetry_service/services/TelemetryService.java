@@ -1,6 +1,7 @@
 package br.com.rafaelpvs.telemetry_service.services;
 
 import java.time.Instant;
+import java.util.UUID;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -11,6 +12,7 @@ import br.com.rafaelpvs.telemetry_service.consumers.telemetry.events.TelemetryRe
 import br.com.rafaelpvs.telemetry_service.entities.TelemetryEntity;
 import br.com.rafaelpvs.telemetry_service.repositories.TelemetryRepository;
 import br.com.rafaelpvs.telemetry_service.services.exceptions.InvalidTelemetryPeriodException;
+import br.com.rafaelpvs.telemetry_service.services.exceptions.TelemetryNotFoundException;
 import br.com.rafaelpvs.telemetry_service.services.mappers.TelemetryMapper;
 import br.com.rafaelpvs.telemetry_service.services.models.MetricStatistics;
 import br.com.rafaelpvs.telemetry_service.services.models.TelemetryStatistics;
@@ -65,6 +67,12 @@ public class TelemetryService {
             statistics.getAverageEnergyConsumption(),
             statistics.getMinimumEnergyConsumption(),
             statistics.getMaximumEnergyConsumption()));
+  }
+
+  @Transactional(readOnly = true)
+  public TelemetryEntity findLatest(UUID deviceId) {
+    return telemetryRepository.findFirstByDeviceIdOrderByEventTimestampDescEventIdDesc(deviceId)
+        .orElseThrow(() -> new TelemetryNotFoundException(deviceId));
   }
 
   private void validatePeriod(FindTelemetryHistoryQuery query) {

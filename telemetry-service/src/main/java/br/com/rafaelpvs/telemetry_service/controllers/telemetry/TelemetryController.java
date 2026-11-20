@@ -55,4 +55,11 @@ public class TelemetryController {
 
     return ResponseEntity.ok(response);
   }
+
+  @GetMapping("/latest")
+  public ResponseEntity<TelemetryResponse> findLatest(@PathVariable UUID deviceId) {
+    var response = telemetryResponseMapper.toResponse(telemetryService.findLatest(deviceId));
+
+    return ResponseEntity.ok(response);
+  }
 }

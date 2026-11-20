@@ -24,6 +24,7 @@ import br.com.rafaelpvs.telemetry_service.entities.TelemetryEntity;
 import br.com.rafaelpvs.telemetry_service.repositories.TelemetryRepository;
 import br.com.rafaelpvs.telemetry_service.repositories.TelemetryRepository.StatisticsProjection;
 import br.com.rafaelpvs.telemetry_service.services.exceptions.InvalidTelemetryPeriodException;
+import br.com.rafaelpvs.telemetry_service.services.exceptions.TelemetryNotFoundException;
 import br.com.rafaelpvs.telemetry_service.services.mappers.TelemetryMapper;
 import br.com.rafaelpvs.telemetry_service.services.queries.FindTelemetryHistoryQuery;
 import br.com.rafaelpvs.telemetry_service.services.queries.FindTelemetryStatisticsQuery;
@@ -169,6 +170,35 @@ class TelemetryServiceTests {
         org.mockito.ArgumentMatchers.any(),
         org.mockito.ArgumentMatchers.any(),
         org.mockito.ArgumentMatchers.any());
+  }
+
+  @Test
+  void shouldFindChronologicallyLatestTelemetry() {
+    var deviceId = UUID.randomUUID();
+    var expected = new TelemetryEntity(
+        UUID.randomUUID(),
+        deviceId,
+        new BigDecimal("95.5000"),
+        new BigDecimal("120.8000"),
+        Instant.parse("2026-11-01T15:30:00Z"),
+        Instant.parse("2026-11-01T15:30:01Z"));
+    when(telemetryRepository.findFirstByDeviceIdOrderByEventTimestampDescEventIdDesc(deviceId))
+        .thenReturn(java.util.Optional.of(expected));
+
+    var result = telemetryService.findLatest(deviceId);
+
+    assertThat(result).isSameAs(expected);
+  }
+
+  @Test
+  void shouldRejectLatestWhenDeviceHasNoTelemetry() {
+    var deviceId = UUID.randomUUID();
+    when(telemetryRepository.findFirstByDeviceIdOrderByEventTimestampDescEventIdDesc(deviceId))
+        .thenReturn(java.util.Optional.empty());
+
+    assertThatThrownBy(() -> telemetryService.findLatest(deviceId))
+        .isInstanceOf(TelemetryNotFoundException.class)
+        .hasMessage("No telemetry found for device " + deviceId);
   }
 
   private TelemetryReceivedEvent event() {
