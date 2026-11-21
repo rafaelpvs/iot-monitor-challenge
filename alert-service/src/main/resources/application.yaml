@@ -37,6 +37,9 @@ server:
   port: ${SERVER_PORT:8084}
 
 app:
+  clients:
+    device-service:
+      base-url: ${DEVICE_SERVICE_URL:http://localhost:8080}
   kafka:
     topics:
       telemetry-received: ${TELEMETRY_RECEIVED_TOPIC:telemetry.received}
